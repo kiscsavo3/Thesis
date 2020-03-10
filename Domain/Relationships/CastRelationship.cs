@@ -17,9 +17,9 @@ namespace Domain.Relationships
 
         public string Character { get; set; }
 
-        public int Gender { get; set; }
+        public int? Gender { get; set; }
 
-        public int Order { get; set; }
+        public int? Order { get; set; }
 
         public string EntityCredit { get; set; }
     }

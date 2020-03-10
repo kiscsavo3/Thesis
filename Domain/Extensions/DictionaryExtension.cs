@@ -10,6 +10,7 @@ namespace Domain.Extensions
             if (value == null) return "null";
             if(value != null && value.GetType() == typeof(string))
             {
+                value = value.ToString().Replace('\\', ' ');
                 value = value.ToString().Replace('\"', '\'');
                 value = value.ToString().Replace('\r', ' ');
                 value = value.ToString().Replace('\n', ' ');

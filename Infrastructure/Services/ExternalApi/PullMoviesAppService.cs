@@ -7,6 +7,7 @@ using Domain.External.DTO;
 using Domain.Relationships;
 using Infrastructure.Helpers;
 using Microsoft.Extensions.Options;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Services.ExternalApi
@@ -24,10 +25,10 @@ namespace Infrastructure.Services.ExternalApi
         }
         public async Task<int> GetMoviesAsync()
         {
-            for (int i = 7; i <= 500; i++) // eddig 125 film lett seedelve
+            for (int i = 1; i <= 20; i++) // eddig en, fr, de, it, es
             {
                 string uri = $"{apiCredentials.Value.BaseUri}/discover/movie{apiCredentials.Value.PartUri}{apiCredentials.Value.ApiKey}" +
-                    $"&sort_by=popularity.desc&include_adult=true&include_video=false&page={i}&with_original_language=en";
+                    $"&sort_by=popularity.desc&include_adult=true&include_video=false&page={i}&with_original_language=es";
                 var apiMovieDTOList = (APIMovieDTOList)ExternalApiHelper.GetData<APIMovieDTOList>(uri);
                 foreach (var apiMovieDTO in apiMovieDTOList.results)
                 {
@@ -72,7 +73,8 @@ namespace Infrastructure.Services.ExternalApi
                     }
                     uri = $"{apiCredentials.Value.BaseUri}/movie/{apiMovieDTO.id}/credits{apiCredentials.Value.PartUri}{apiCredentials.Value.ApiKey}";
                     var apiMovieCreditsDTO = (ApiMovieCreditsDTO)ExternalApiHelper.GetData<ApiMovieCreditsDTO>(uri);
-                    foreach (var apiMovieCrew in apiMovieCreditsDTO.crew)
+                    var crew = apiMovieCreditsDTO.crew.Where(x => x.job == "Director" || x.department == "Writing" || x.job == "Producer").ToList();
+                    foreach (var apiMovieCrew in crew)
                     {
                         uri = $"{apiCredentials.Value.BaseUri}/person/{apiMovieCrew.id}{apiCredentials.Value.PartUri}{apiCredentials.Value.ApiKey}";
                         result = ExternalApiHelper.GetData<ApiPeopleDetailsDTO>(uri);
@@ -83,7 +85,9 @@ namespace Infrastructure.Services.ExternalApi
                         mapper.Map(apiMovieCrew, personRelationship);
                         movieEntity.Crew.Add(personRelationship);
                     }
-                    foreach (var apiMovieCast in apiMovieCreditsDTO.cast)
+                    var rate = apiMovieCreditsDTO.cast.Length < 50 ? 0.4 : 0.2; // This is rate is a questionable thing, it needs more consideration to define it.
+                    var cast = apiMovieCreditsDTO.cast.Where(x => x.order <= apiMovieCreditsDTO.cast.ToList().Count()*rate).ToList();
+                    foreach (var apiMovieCast in cast)
                     {
                         uri = $"{apiCredentials.Value.BaseUri}/person/{apiMovieCast.id}{apiCredentials.Value.PartUri}{apiCredentials.Value.ApiKey}";
                         result = ExternalApiHelper.GetData<ApiPeopleDetailsDTO>(uri);

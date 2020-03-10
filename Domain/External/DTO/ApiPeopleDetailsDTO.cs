@@ -9,9 +9,9 @@
         public int id { get; set; }
         public string name { get; set; }
         public string[] also_known_as { get; set; }
-        public int gender { get; set; }
+        public int? gender { get; set; }
         public string biography { get; set; }
-        public float popularity { get; set; }
+        public float? popularity { get; set; }
         public string place_of_birth { get; set; }
         public string profile_path { get; set; }
         public bool adult { get; set; }

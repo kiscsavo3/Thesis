@@ -6,12 +6,14 @@ namespace Infrastructure.Helpers
 {
     public static class ExternalApiHelper
     {
+        private static HttpClient httpClient = new HttpClient();
         public static object GetData<T>(string uri) 
         {
+            /*
             var httpClient = new HttpClient()
             {
                 BaseAddress = new Uri(uri)
-            };
+            };*/
             try
             {
                 var result = new object();
