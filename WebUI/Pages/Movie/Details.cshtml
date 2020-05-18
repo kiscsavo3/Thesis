@@ -1,0 +1,203 @@
+﻿@page
+@model WebUI.Movie.DetailsModel
+
+@{
+    string StringifyArr(string[] arr, string start)
+    {
+        bool first = true;
+        @foreach (var item in arr)
+        {
+            @if (first)
+            {
+                start += " " + item;
+                first = false;
+            }
+            else
+            {
+                start += ", " + item;
+            }
+        }
+        return start;
+    }
+}
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Details</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/black-tie/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    
+</head>
+<body>
+    @Html.AntiForgeryToken()
+    <p>@Model.NoData</p>
+    <div class="card mb-3">
+        <div class="row no-gutters">
+            <div class="col-md-4">
+                <img src=@Model.Movie.PosterPath class="card-img" alt=@Model.Movie.Title>
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h5 class="card-title">@Model.Movie.Title</h5>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <div id="ratings">
+                            <span class="fa fa-star-o"></span>
+                            <span class="fa fa-star-o"></span>
+                            <span class="fa fa-star-o"></span>
+                            <span class="fa fa-star-o"></span>
+                            <span class="fa fa-star-o"></span>
+                        </div>
+                    }
+                    <div class="card-text">
+                        <p><b>Overview:</b> @Model.Movie.Overview</p>
+                        <p><b>Budget:</b> @Model.Movie.Budget USD</p>
+                        <p><b>Revenue:</b> @Model.Movie.Revenue USD</p>
+                        <p><b>Runtime:</b> @Model.Movie.Runtime Min</p>
+                        <p><b>ReleaseDate:</b> @Model.Movie.ReleaseDate</p>
+                        <p id="genre">
+                            <b>Genres:</b>
+                            @{
+                                string result = StringifyArr(Model.Movie.Genres.Select(g => g.Name).ToArray(), "");
+                                @Html.DisplayFor(modelItem => result);
+                            }
+                        </p>
+                        <p id="productioncompanies">
+                            <b>Production Companies:</b>
+                            @{
+                                result = StringifyArr(Model.Movie.ProductionCompanies.Select(g => g.Name).ToArray(), "");
+                                @Html.DisplayFor(modelItem => result);
+                            }
+                        </p>
+                        <p id="productioncountries">
+                            <b>Production Countries:</b>
+                            @{
+                                result = StringifyArr(Model.Movie.ProductionCountries.Select(g => g.Name).ToArray(), "");
+                                @Html.DisplayFor(modelItem => result);
+                            }
+                        </p>
+                        <p>
+                            <a asp-page="./Credits" asp-route-id="@Model.Id">Full crew and cast</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="recommendations" style="margin-top: 15px">
+        <p style="margin-bottom: 10px"><b>Similar Movies:</b></p>
+        @for (int i = 0; i < Model.Movie.Recommendations.Count; i++)
+        {
+            <a asp-page="./Details" asp-route-id="@Model.Movie.Recommendations[i].TmdbId">
+                <img src="@Model.Movie.Recommendations[i].ImageUri" alt="@Model.Movie.Recommendations[i].Title" style="width: 13rem" />
+            </a>
+        }
+    </div>
+    <div style="margin-top: 15px">
+        @if (User.Identity.IsAuthenticated)
+        {
+            <p><b>You can create your review about the movie. If you have already done it, your next review will override the previous one!</b></p>
+            <form>
+                <textarea cols="120" rows="5" id="reviewText" placeholder="Text your review" maxlength="3000"></textarea>
+                <button id="createButton" type="button">Create</button>
+            </form>
+        }
+        <div id="reviews">
+            @for (int i = 0; i < Model.Movie.Reviews.Length; i++)
+            {
+                <div id="@Model.Movie.Reviews[i].EntityId" class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">@Model.Movie.Reviews[i].UserName   @Model.Movie.Reviews[i].Date</h5>
+                    </div>
+                    <div class="card-text">@Model.Movie.Reviews[i].Text</div>
+                </div>
+            }
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#createButton').on('click', function(){
+                var text = $('#reviewText').val();
+                let reviewViewModel = { text: text, tmdbid: '@Model.Movie.TmdbId' };
+                if (text != null && text != "") {
+                    $.ajax({
+                        type: "POST",
+                        url: '@Url.Page("details", "review")',
+                        data: JSON.stringify(reviewViewModel),
+                         headers: {
+                            "XSRF-TOKEN": $('input:hidden[name="__RequestVerificationToken"]').val()
+                        },
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (data) {
+                            $('#reviews #' + data.entityId).remove();
+                            $('#reviews').append("<div id=\"" + data.entityId + "\" class=\"card\"><div class=\"card-header\"><h5 class=\"card-title\">" + data.userName + "   " + data.date + "</h5></div><dib class=\"card-text\">" + data.text + "</div></div>");
+                        },
+                        failure: function (response) {
+                            alert(response);
+                        }
+                    })
+                }
+            });
+            const stars = document.getElementById("ratings").children;
+            let index = 0;
+            let ratingValue;
+            if (@Model.Movie.Rating != null) {
+                index = @Model.Movie.Rating;
+                for (var i = 0; i < index; i++) {
+                    stars[i].classList.remove("fa-star-o");
+                    stars[i].classList.add("fa-star");
+                }
+            }
+            for (let i = 0; i < stars.length; i++) {
+                stars[i].addEventListener("mouseover", function () {
+                    for (let j = index; j < stars.length; j++) {
+                        stars[j].classList.remove("fa-star");
+                        stars[j].classList.add("fa-star-o");
+                    }
+                    for (let j = 0; j <= i; j++) {
+                        stars[j].classList.remove("fa-star-o");
+                        stars[j].classList.add("fa-star");
+                    }
+                })
+                stars[i].addEventListener("click", function () {
+                    index = i+1;
+                    ratingValue = index;
+                    let ratingViewModel = { value: ratingValue, tmdbid: '@Model.Id' };
+                     $.ajax({
+                        type: "POST",
+                        url: '@Url.Page("details", "rating")',
+                        headers: {
+                            "XSRF-TOKEN": $('input:hidden[name="__RequestVerificationToken"]').val()
+                        },
+                        contentType: "application/json; charset=utf-8",
+                         dataType: "json",
+                         data: JSON.stringify(ratingViewModel),
+                        success: function (response) {
+                            console.log(response);
+                        },
+                        failure: function (response) {
+                            alert(response);
+                        }
+                });
+
+                })
+                stars[i].addEventListener("mouseout", function () {
+                    for (let j = 0; j < stars.length; j++) {
+                        stars[j].classList.remove("fa-start");
+                        stars[j].classList.add("fa-star-o");
+                    }
+                    for (let j = 0; j < index; j++) {
+                        stars[j].classList.remove("fa-star-o");
+                        stars[j].classList.add("fa-star");
+                    }
+                })
+            }
+        });
+    </script>
+</body>
+</html>

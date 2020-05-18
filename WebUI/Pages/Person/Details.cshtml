@@ -1,0 +1,30 @@
+﻿@page
+@model WebUI.Person.DetailsModel
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Details</title>
+</head>
+<body>
+    <p>@Model.NoData</p>
+    <div class="card mb-3">
+        <div class="row no-gutters">
+            <div class="col-md-4">
+                <img src=@Model.Person.ProfilePath class="card-img" alt=@Model.Person.Name>
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h5 class="card-title">@Model.Person.Name</h5>
+                    <div class="card-text">
+                        <p><b>Biography:</b> @Model.Person.Biography</p>
+                        <p><b>Department:</b> @Model.Person.KnownForDepartment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

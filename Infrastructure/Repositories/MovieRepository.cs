@@ -1,15 +1,10 @@
 ﻿using Application.Common.Interfaces;
 using AutoMapper;
-using Domain.Common;
 using Domain.Entities;
-using Domain.Extensions;
-using Domain.Internal.DTO;
-using Domain.Relationships;
 using Neo4j.Driver;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories
@@ -23,63 +18,94 @@ namespace Infrastructure.Repositories
             this.appDatabase = appDatabase;
             this.mapper = mapper;
         }
-        public Task<MovieEntity> GetAsync(long id)
+        public async Task<Movie> GetMovieById(int tmdbId)
         {
-            throw new NotImplementedException();
+            var query = $"MATCH (m:Movie{{ tmdbid: {tmdbId}}}) RETURN m";
+            var movieNode = await appDatabase.ExecuteReadQuery<INode>(query);
+            var movie = movieNode.Select(n => mapper.Map<Movie>(n)).First();
+            return movie;
         }
 
-        public async Task UpsertAsync(MovieEntity movieEntity)
+        public async Task<List<Movie>> GetMoviesByTitle(string title)
         {
-            var nodeMovie = mapper.Map<Node>(movieEntity);
-            var nodeMovieFromDb = UpsertNode(nodeMovie);
-            var propertyInfos = movieEntity.GetType().GetProperties();
-            foreach (var propertyInfo in propertyInfos)
-            {
-                if (propertyInfo.PropertyType.GetGenericArguments().Count() > 0)
-                {
-                    if (propertyInfo.PropertyType == typeof(List<GenreRelationship>)) { EntityDisassembler<GenreRelationship>(propertyInfo, movieEntity, nodeMovieFromDb); }
-                    else if (propertyInfo.PropertyType == typeof(List<KeyWordRelationship>)) {  EntityDisassembler<KeyWordRelationship>(propertyInfo, movieEntity, nodeMovieFromDb); }
-                    else if (propertyInfo.PropertyType == typeof(List<CastRelationship>)) {  EntityDisassembler<CastRelationship>(propertyInfo, movieEntity, nodeMovieFromDb); }
-                    else if (propertyInfo.PropertyType == typeof(List<CrewRelationship>)) {  EntityDisassembler<CrewRelationship>(propertyInfo, movieEntity, nodeMovieFromDb); }
-                    else if (propertyInfo.PropertyType == typeof(List<PersonRelationship>)) {  EntityDisassembler<PersonRelationship>(propertyInfo, movieEntity, nodeMovieFromDb); }
-                    else if (propertyInfo.PropertyType == typeof(List<ProductionCompanyRelationship>)) {  EntityDisassembler<ProductionCompanyRelationship>(propertyInfo, movieEntity, nodeMovieFromDb); }
-                    else if (propertyInfo.PropertyType == typeof(List<ProductionCountyRelationship>)) {  EntityDisassembler<ProductionCountyRelationship>(propertyInfo, movieEntity, nodeMovieFromDb); }
-                    else if (propertyInfo.PropertyType == typeof(List<SpokenLanguageRelationship>)) {  EntityDisassembler<SpokenLanguageRelationship>(propertyInfo, movieEntity, nodeMovieFromDb); }
-                }
-            }
+            var query = $"MATCH(m: Movie) WHERE m.searchtitle CONTAINS reduce(result = \"\", n IN Split(toLower(\"{title}\"), ' ') | result + n) WITH m, m.ratecount * m.rateavg as pop ORDER BY pop DESC RETURN m LIMIT 66";
+            //var query = $"CALL db.index.fulltext.queryNodes(\"title\", \"{title}*\") YIELD node, score WITH node, score RETURN node LIMIT 150";
+            var movieNodes = await appDatabase.ExecuteReadQuery<INode>(query);
+            var movie = movieNodes.Select(n => mapper.Map<Movie>(n)).ToList();
+            return movie;
+
         }
 
-        private void EntityDisassembler<T>(PropertyInfo propertyInfo, MovieEntity movieEntity, INode nodeMovieFromDb) where T : BaseRelationship
+        public async Task<List<Review>> GetReviews(int tmdbId)
         {
-            var relationships = (List<T>)propertyInfo.GetValue(movieEntity);
-            foreach (var relationship in relationships)
-            {
-                var nodeGeneric = mapper.Map<Node>(relationship.EndNode);
-                var nodeGenricFromDb =  UpsertNode(nodeGeneric);
-                relationship.StartNodeId = nodeMovieFromDb.Id;
-                relationship.EndNodeId = nodeGenricFromDb.Id;
-                var relationshipToDb = mapper.Map<Relationship>(relationship);
-                UpsertRelationship(relationshipToDb);
-            }
+            var query = $"MATCH (m:Movie {{ tmdbid: {tmdbId} }})<-[hr: HAS_REVIEW]-(u:User) RETURN hr";
+            var reviewRelationships = await appDatabase.ExecuteReadQuery<IRelationship>(query);
+            var reviews = reviewRelationships.Select(r => mapper.Map<Review>(r)).ToList();
+            reviews.ForEach(x => x.TmdbId = tmdbId);
+            return reviews;
         }
 
-        private INode UpsertNode(Node node)
+        public async Task<List<string>> GetTitlesByTerm(string term)
         {
-            List<INode> nodesFromDb = null;
-            var nodeGenericFromDb = appDatabase.GetNodes((string)node.Properties.GetValue("EntityId"), node.Label);
-            if (nodeGenericFromDb.Count == 0) { nodesFromDb = appDatabase.AddNode(node); }
-            else if (nodeGenericFromDb.Count == 1) { node.Id = nodeGenericFromDb.First().Id; nodesFromDb = appDatabase.UpdateNode(node); }
-            else throw new Exception("More than one entity has found!");
-            return nodesFromDb.First();
+            //var query = $"CALL {{ MATCH(m: Movie) WHERE m.SearchTitle CONTAINS reduce(result = \"\", n IN Split(toLower(\"{term}\"), ' ') | result + n) AND m.Popularity is not null RETURN m, m.Popularity ORDER BY m.Popularity DESC }} RETURN m.Title LIMIT 5";
+            var query = $"CALL db.index.fulltext.queryNodes(\"title\", \"{term}*\") YIELD node, score WITH node, score RETURN node.title LIMIT 7";
+            var movieTitles = await appDatabase.ExecuteReadQuery<string>(query);
+            return movieTitles;
         }
-        private IRelationship UpsertRelationship(Relationship relationship)
+
+        public async Task<List<Movie>> GetRecommendationsByTag(int tmdbId)
         {
-            List<IRelationship> relationsFromDb = null;
-            var relationshipFromDb = appDatabase.GetRelationship(relationship);
-            if (relationshipFromDb.Count == 0) { relationsFromDb = appDatabase.AddRelationship(relationship); }
-            else if (relationshipFromDb.Count == 1) { relationship.Id = relationshipFromDb.First().Id; relationsFromDb = appDatabase.UpdateRelationship(relationship); }
-            else throw new Exception("More then one relation has found!");
-            return relationsFromDb.First();
+            var query = $"MATCH (g: Genre)<--(n: Movie {{ tmdbid: {tmdbId} }})-->(t: Tag)<--(m: Movie)-->(g) WITH m, count((m)) as cont ORDER BY cont DESC LIMIT 20 RETURN m";
+            var movieNodes = await appDatabase.ExecuteReadQuery<INode>(query);
+            var movies = movieNodes.Select(n => mapper.Map<Movie>(n)).ToList();
+            return movies;
+        }
+
+        public async Task<List<Movie>> GetDiscoveredMovies(string entityid)
+        {
+            var query = $"MATCH (origin:User{{entityid:'{entityid}'}})-[r:RATED]->(m1:Movie) " +
+            $"MATCH(m1)<-[r1: RATED]-(user)-[r2: RATED]->(m2) " +
+            $"WITH m1, r, algo.similarity.cosine(collect(r1.score - user.rateavg), collect(r2.score - user.rateavg)) as sim, m2, count(user) as ucount " +
+            $"WHERE sim > 0.8 " +
+            $"WITH m2 as reco, sim* r.score as score, ucount " +
+            $"WHERE score > 4.0 WITH reco, score, ucount " +
+            $"ORDER BY ucount DESC LIMIT 21 " +
+            $"RETURN reco";
+            var movieNodes = await appDatabase.ExecuteReadQuery<INode>(query);
+            var movie = movieNodes.Select(n => mapper.Map<Movie>(n)).ToList();
+            return movie;
+        }
+
+        public async Task<List<Movie>> GetRecMovies(string entityid)
+        {
+            var query = $"MATCH (p1:User {{entityid: '{entityid}'}})-[rated:RATED]->(movie) " +
+            $"WITH p1, algo.similarity.asVector(movie, rated.score) AS p1Vector, collect(id(movie)) AS p1JVector " +
+            $"MATCH(p2: User) -[rated: RATED]->(movie) " +
+            $"WHERE p2<> p1 " +
+            $"WITH p1, p2, p1Vector, p1JVector, algo.similarity.asVector(movie, rated.score) AS p2Vector, collect(id(movie)) AS p2JVector " +
+            $"WITH p1 AS from, p2 AS to, algo.similarity.pearson(p1Vector, p2Vector, {{ vectorType: \"maps\"}}) AS similarity, algo.similarity.jaccard(p1JVector, p2JVector) AS similarityj " +
+            $"WHERE similarity > 0.6 " +
+            $"WITH from, to, similarity, similarityj " +
+            $"ORDER BY similarityj DESC LIMIT 50 " +
+            $"MATCH (to)-[r: RATED]->(reco: Movie) " +
+            $"WHERE NOT (from)-->(reco) " +
+            $"WITH reco as reco, SUM(r.score * similarity - to.rateavg) / SUM(similarity) + from.rateavg as score, COUNT(r) as counter " +
+            $"WHERE score > 4.0 " +
+            $"WITH reco, score, counter " +
+            $"ORDER BY counter DESC LIMIT 21 " +
+            $"RETURN reco";
+            var movieNodes = await appDatabase.ExecuteReadQuery<INode>(query);
+            var movie = movieNodes.Select(n => mapper.Map<Movie>(n)).ToList();
+            return movie;
+        }
+
+        public async Task<List<Movie>> GetDefaultMovies(string entityid)
+        {
+            var query = $"MATCH(u: User) -[r: RATED]->(m: Movie) WHERE NOT(:User {{ entityid: '{entityid}'}})-[:RATED]->(m) " +
+                $"WITH distinct m, m.rateavg* log(m.ratecount) as score ORDER BY score DESC LIMIT 21 RETURN m";
+            var movieNodes = await appDatabase.ExecuteReadQuery<INode>(query);
+            var movie = movieNodes.Select(n => mapper.Map<Movie>(n)).ToList();
+            return movie;
         }
     }
 }

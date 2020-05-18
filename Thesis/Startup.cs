@@ -1,5 +1,4 @@
 using Application;
-using Autofac;
 using Domain.Common;
 using Infrastructure;
 using Microsoft.AspNetCore.Builder;
@@ -8,9 +7,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Autofac.Extensions.DependencyInjection;
-using AutoMapper;
-using System.Reflection;
 
 namespace Thesis
 {

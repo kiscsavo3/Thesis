@@ -1,0 +1,89 @@
+﻿@page
+@model Web.Movie.IndexModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/black-tie/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script>
+         $(document).ready(function () {
+            $('#movieSearch').autocomplete({
+                source: '@Url.Page("index", "search")'
+            });
+        });
+        $(document).ready(function () {
+            $('#searchButton').on('click', function(){
+                var searchedItem = $('#movieSearch').val();
+
+                if (searchedItem != null && searchedItem != "") {
+                    const myNode = document.getElementById("res");
+                    while (myNode.firstChild) {
+                        myNode.removeChild(myNode.lastChild);
+                    }
+                    $('#res').append("<div id=loader>Loading...</div>");
+                    $.ajax({
+                        type: "GET",
+                        url: '@Url.Page("index", "searchmovies")',
+                        data: { title: searchedItem },
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json"
+                    })
+                    .done(function (data) {
+                        //alert("success");
+                        console.log(data);
+                        $('#loader').remove();
+                        for (var i = 0; i < data.length; i++) {
+
+                            $('#res').append("<div id=" + i + " class=\"card\" style=\"width: 12rem;\"></div>");
+                            $('#' + i).append("<img class=\"card-img-top\" src=\"" + data[i].imageUri + "\" alt=\"Card image cap\">");
+                            $('#' + i).append("<div id=class=\"card-body\"></div>");
+                            $('#' + i + ' div').append("<p class=\"card-text\">Title: " + data[i].title + "</p>");
+                            //var parms = { "tmdbId": data[i].tmdbId };
+                            $('#' + i + ' div').append("<a href=\"/Movie/Details?id=" + data[i].tmdbId + "\">read more</a>");
+                            //$('#' + i + ' div').append("<a asp-page=\"./Details\" asp-route-id=\""+ data[i].tmdbId +"\">read more</a>");
+                        } 
+
+                        //$('<div/>', { class: "card", style: "width: 18rem;" }).appendTo("#res");
+
+                    })
+                    .fail(function (errorThrown) {
+                        alert("error");
+                    });
+                }
+            });
+        });
+
+    </script>
+</head>
+<body>
+    <h3>AutoComplete</h3>
+    <div>
+        <form>
+            <input type="text" id="movieSearch" placeholder="Input the title" />
+            <button id="searchButton" type="button">search</button>
+        </form>
+    </div>
+    <div>
+        @{
+            var parms = new Dictionary<string, string>
+            {
+                { "tmdbId", "550" }
+            };
+        }
+
+        <a asp-page="./Details" asp-route-id="550">To details</a>
+    </div>
+    <div id="res">
+       
+    </div>
+
+</body>
+</html>

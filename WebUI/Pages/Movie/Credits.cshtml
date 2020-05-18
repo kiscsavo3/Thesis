@@ -1,0 +1,109 @@
+﻿@page
+@model WebUI.Movie.CreditsModel
+
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Credentials</title>
+</head>
+<body>
+    <div id="res" class="container">
+        <p style="margin-top: 10px"><b>Cast:</b></p>
+        @for (int i = 0; i < Model.Credits.Cast.Length; i = i + 0)
+        {
+            <div class="row" style="margin-top: 10px">
+                @if (i < Model.Credits.Cast.Length)
+                {
+                    <div class="col">
+                        <div class="card" style="width: 20rem;">
+                            <a asp-page="/Person/Details" asp-route-id=@Model.Credits.Cast[i].Id>
+                                <img class="card-img-top" src=@Model.Credits.Cast[i].ProfilePath alt=@Model.Credits.Cast[i].Name>
+                            </a>
+                            <div class="card-text">
+                                <p><b>Character: </b>@Model.Credits.Cast[i].Character</p>
+                                <p><b>Name: </b>@Model.Credits.Cast[i++].Name</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (i < Model.Credits.Cast.Length)
+                {
+                    <div class="col">
+                        <div class="card" style="width: 20rem;">
+                            <a asp-page="/Person/Details" asp-route-id=@Model.Credits.Cast[i].Id>
+                                <img class="card-img-top" src=@Model.Credits.Cast[i].ProfilePath alt=@Model.Credits.Cast[i].Name>
+                            </a>
+                            <div class="card-text">
+                                <p><b>Character: </b>@Model.Credits.Cast[i].Character</p>
+                                <p><b>Name: </b>@Model.Credits.Cast[i++].Name</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (i < Model.Credits.Cast.Length)
+                {
+                    <div class="col">
+                        <div class="card" style="width: 20rem;">
+                            <a asp-page="/Person/Details" asp-route-id=@Model.Credits.Cast[i].Id>
+                                <img class="card-img-top" src=@Model.Credits.Cast[i].ProfilePath alt=@Model.Credits.Cast[i].Name>
+                            </a>
+                            <div class="card-text">
+                                <p><b>Character: </b>@Model.Credits.Cast[i].Character</p>
+                                <p><b>Name: </b>@Model.Credits.Cast[i++].Name</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        <p style="margin-top: 10px"><b>Crew:</b></p>
+        @for (int j = 0; j < Model.Credits.Crew.Length; j = j + 0)
+        {
+            <div class="row" style="margin-top: 10px">
+                @if (j < Model.Credits.Crew.Length)
+                {
+                    <div class="col">
+                        <div class="card" style="width: 20rem;">
+                            <img class="card-img-top" src=@Model.Credits.Crew[j].ProfilePath alt=@Model.Credits.Crew[j].Name>
+                            <div class="card-text">
+                                <p><b>Job: </b>@Model.Credits.Crew[j].Job</p>
+                                <p><b>Name: </b>@Model.Credits.Crew[j].Name</p>
+                                <a asp-page="/Person/Details" asp-route-id=@Model.Credits.Crew[j++].Id>read more</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (j < Model.Credits.Crew.Length)
+                {
+                    <div class="col">
+                        <div class="card" style="width: 20rem;">
+                            <img class="card-img-top" src=@Model.Credits.Crew[j].ProfilePath alt=@Model.Credits.Crew[j].Name>
+                            <div class="card-text">
+                                <p><b>Job: </b>@Model.Credits.Crew[j].Job</p>
+                                <p><b>Name: </b>@Model.Credits.Crew[j].Name</p>
+                                <a asp-page="/Person/Details" asp-route-id=@Model.Credits.Crew[j++].Id>read more</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (j < Model.Credits.Crew.Length)
+                {
+                    <div class="col">
+                        <div class="card" style="width: 20rem;">
+                            <img class="card-img-top" src=@Model.Credits.Crew[j].ProfilePath alt=@Model.Credits.Crew[j].Name>
+                            <div class="card-text">
+                                <p><b>Job: </b>@Model.Credits.Crew[j].Job</p>
+                                <p><b>Name: </b>@Model.Credits.Crew[j].Name</p>
+                                <a asp-page="/Person/Details" asp-route-id=@Model.Credits.Crew[j++].Id>read more</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</body>
+</html>

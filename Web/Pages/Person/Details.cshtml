@@ -1,0 +1,30 @@
+﻿@page
+@model Web.Person.DetailsModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Details</title>
+</head>
+<body>
+    <p>@Model.NoData</p>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">@Model.Person.Name</h5>
+        </div>
+        <div class="card-body">
+            <img class="card-img-top" src=@Model.Person.ProfilePath alt="Card image cap">
+            <p class="card-text">Biography: @Model.Person.Biography</p>
+            <p class="card-text">Birthday: @Model.Person.Birthday</p>
+            <p class="card-text">Place of birth: @Model.Person.PlaceOfBirth</p>
+            <p class="card-text">Department: @Model.Person.KnownForDepartment</p>
+
+        </div>
+    </div>
+</body>
+</html>

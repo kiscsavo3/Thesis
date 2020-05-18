@@ -4,24 +4,19 @@ using System.Net.Http;
 
 namespace Infrastructure.Helpers
 {
-    public static class ExternalApiHelper
+    public class ExternalApiHelper
     {
-        private static HttpClient httpClient = new HttpClient();
-        public static object GetData<T>(string uri) 
+        private HttpClient httpClient = new HttpClient();
+        public T GetData<T>(string uri) where T : class
         {
-            /*
-            var httpClient = new HttpClient()
-            {
-                BaseAddress = new Uri(uri)
-            };*/
             try
             {
-                var result = new object();
+                T result = null;
                 var response = httpClient.GetAsync(uri).Result;
-                if (!response.IsSuccessStatusCode) return result;
+                if (!response.IsSuccessStatusCode) return null;
                 string responseAsString = response.Content.ReadAsStringAsync().Result;
                 result = JsonConvert.DeserializeObject<T>(responseAsString);
-                return (T)result;
+                return result;
             }
             finally { httpClient.CancelPendingRequests(); }
         }

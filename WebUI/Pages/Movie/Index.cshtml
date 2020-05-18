@@ -1,0 +1,81 @@
+﻿@page
+@model WebUI.Movie.IndexModel
+
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/black-tie/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <script>
+         $(document).ready(function () {
+             $('#movieSearch').autocomplete({ source: '@Url.Page("index", "search")'});
+         });
+    </script>
+</head>
+<body>
+    <div id="res" class="container">
+        @if(Model.Movies.Count == 0)
+        {
+            <p style="margin-left: 24em"><b>No results</b></p>
+        }
+        @for (int i = 0; i < Model.Movies.Count; i = i+0)
+        {
+        <div class="row" style="margin-top: 10px">
+            @if (i < Model.Movies.Count)
+            {
+                <div class="col">
+                    <div class="card" style="width: 20rem;">
+                        <div class="card" style="width: 20rem;">
+                            <div class="card-header">
+                                <h5 class="card-title">@Model.Movies[i].Title</h5>
+                                <div id="ratings">@Model.Movies[i].RatingAverage / @Model.Movies[i].RatingCount <span class="fa fa-star"></span></div>
+                            </div>
+                            <a asp-page="./Details" asp-route-id="@Model.Movies[i].TmdbId">
+                                <img class="card-img-top" src=@Model.Movies[i].ImageUri alt="@Model.Movies[i++].Title">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (i < Model.Movies.Count)
+            {
+                <div class="col">
+                    <div class="card" style="width: 20rem;">
+                        <div class="card-header">
+                            <h5 class="card-title">@Model.Movies[i].Title</h5>
+                            <div id="ratings">@Model.Movies[i].RatingAverage / @Model.Movies[i].RatingCount <span class="fa fa-star"></span></div>
+                        </div>
+                        <a asp-page="./Details" asp-route-id="@Model.Movies[i].TmdbId">
+                            <img class="card-img-top" src=@Model.Movies[i].ImageUri alt="@Model.Movies[i++].Title">
+                        </a>
+                    </div>
+                </div>
+            }
+            @if (i < Model.Movies.Count)
+            {
+                <div class="col">
+                    <div class="card" style="width: 20rem;">
+                        <div class="card-header">
+                            <h5 class="card-title">@Model.Movies[i].Title</h5>
+                            <div id="ratings">@Model.Movies[i].RatingAverage / @Model.Movies[i].RatingCount <span class="fa fa-star"></span></div>
+                        </div>
+                        <a asp-page="./Details" asp-route-id="@Model.Movies[i].TmdbId">
+                            <img class="card-img-top" src=@Model.Movies[i].ImageUri alt="@Model.Movies[i++].Title">
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+            
+        }
+    </div>
+
+</body>
+</html>

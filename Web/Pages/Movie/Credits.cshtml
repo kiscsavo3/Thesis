@@ -1,0 +1,45 @@
+﻿@page
+@model Web.Movie.CreditsModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Credentials</title>
+</head>
+<body>
+    @for (int i = 0; i < @Model.Credits.Cast.Length; i++)
+    {
+        <div class="card">
+            <div class="card-body">
+                <img class="card-img-top" src="@Model.Credits.Cast[i].ProfilePath" alt="img" width="250" />
+                <p class="card-text">
+                    <a href="/Person/Details?id=@Model.Credits.Cast[i].Id">@Model.Credits.Cast[i].Name</a>
+                </p>
+                <p class="card-text">
+                    @Model.Credits.Cast[i].Character
+                </p>
+            </div>
+        </div>
+    }
+    @for (int i = 0; i < @Model.Credits.Crew.Length; i++)
+    {
+        <div class="card">
+            <div class="card-body">
+                <img class="card-img-top" src="@Model.Credits.Crew[i].ProfilePath" alt="img" width="250" />
+                <p class="card-text">
+                    <a href="/Person/Details?id=@Model.Credits.Crew[i].Id">@Model.Credits.Crew[i].Name</a>
+                </p>
+                <p class="card-text">
+                    @Model.Credits.Crew[i].Job
+                </p>
+            </div>
+        </div>
+    }
+
+</body>
+</html>
